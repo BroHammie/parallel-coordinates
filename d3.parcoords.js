@@ -953,7 +953,9 @@ pc.brushMode = function(mode) {
       });
   };
 
-  function brushExtents() {
+  function brushExtents(extents) {
+    if(typeof(extents) === 'undefined')
+  {
     var extents = {};
     __.dimensions.forEach(function(d) {
       var brush = brushes[d];
@@ -965,13 +967,50 @@ pc.brushMode = function(mode) {
     });
     return extents;
   }
+  else 
+  {
+    //first get all the brush selections
+    var brushSelections = {};
+    g.selectAll('.brush')
+      .each(function(d) {
+        brushSelections[d] = d3.select(this);
+
+    });   
+    
+    // loop over each dimension and update appropriately (if it was passed in through extents)
+    __.dimensions.forEach(function(d) {
+      if (extents[d] === undefined){
+        return;
+      }
+      
+      var brush = brushes[d];
+      if (brush !== undefined) {
+        //update the extent
+        brush.extent(extents[d]);
+        
+        //redraw the brush
+        brush(brushSelections[d]);
+        
+        //fire some events
+        brush.event(brushSelections[d]);
+      }
+    });
+    
+    //redraw the chart
+    pc.renderBrushed();
+  }
+  }
 
   function brushFor(axis) {
     var brush = d3.svg.brush();
 
     brush
       .y(yscale[axis])
-      .on("brushstart", function() { d3.event.sourceEvent.stopPropagation() })
+      .on("brushstart", function() { 
+      if(d3.event.sourceEvent !== null) {
+        d3.event.sourceEvent.stopPropagation();
+    }
+    })
       .on("brush", function() {
         brushUpdated(selected());
       })
@@ -982,7 +1021,6 @@ pc.brushMode = function(mode) {
     brushes[axis] = brush;
     return brush;
   }
-
   function brushReset(dimension) {
     __.brushed = false;
     if (g) {
@@ -1502,6 +1540,7 @@ pc.brushMode = function(mode) {
   }
 })();
 // brush mode: angular
+// code based on 2D.strums.js
 
 (function() {
   var arcs = {},
@@ -1669,6 +1708,7 @@ pc.brushMode = function(mode) {
     };
   }
   
+  // some helper functions
   function hypothenuse(a, b) {
 	  return Math.sqrt(a*a + b*b);
   }
@@ -1687,6 +1727,7 @@ pc.brushMode = function(mode) {
 	  }; 
   })();
   
+  // [0, 2*PI] -> [-PI/2, PI/2]
   var signedAngle = function(angle) {
 	  var ret = angle;
 	  if (angle > Math.PI) {
@@ -1699,6 +1740,12 @@ pc.brushMode = function(mode) {
 	  return -ret;
   }
   
+  /**
+   * angles are stored in radians from in [0, 2*PI], where 0 in 12 o'clock.
+   * However, one can only select lines from 0 to PI, so we compute the
+   * 'signed' angle, where 0 is the horizontal line (3 o'clock), and +/- PI/2
+   * are 12 and 6 o'clock respectively.
+   */
   function containmentTest(arc) {
     var startAngle = signedAngle(arc.startAngle);
     var endAngle = signedAngle(arc.endAngle);
@@ -1739,7 +1786,7 @@ pc.brushMode = function(mode) {
           a = arcs.width(id),
           b = y1(d[d1]) - y2(d[d2]),
           c = hypothenuse(a, b),
-          angle = Math.asin(b/c);
+          angle = Math.asin(b/c);	// rad in [-PI/2, PI/2]
       return test(angle);
     }
 
