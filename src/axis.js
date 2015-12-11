@@ -15,17 +15,116 @@ function flipAxisAndUpdatePCP(dimension) {
 
 function rotateLabels() {
   var delta = d3.event.deltaY;
-  delta = delta < 0 ? -5 : delta;
+  delta = delta < 0 ? -18 : delta;
   delta = delta > 0 ? 5 : delta;
 
   __.dimensionTitleRotation += delta;
   pc.svg.selectAll("text.label")
-    .attr("transform", "translate(0,-5) rotate(" + __.dimensionTitleRotation + ")");
+    .attr("transform", "translate(0,-18) rotate(" + __.dimensionTitleRotation + ")");
   d3.event.preventDefault();
 }
 
 function dimensionLabels(d) {
   return d in __.dimensionTitles ? __.dimensionTitles[d] : d;  // dimension display names
+}
+
+function dimensionMax(d) {
+    return d in yscale ? (yscale[d].domain()[1]).toFixed(2) : d;  // dimension display names
+}
+
+function dimensionMin(d) {
+    return d in yscale ? (yscale[d].domain()[0]).toFixed(2) : d;  // dimension display names
+}
+
+function dimensionValListener(e) {
+    var p = this.parentNode;
+
+    var xy = this.getBBox();
+    var p_xy = p.getBBox();
+
+    xy.x = p_xy.x;
+    xy.y = p_xy.y;
+
+    var el = d3.select(this);
+    var p_el = d3.select(p);
+
+    var form = p_el.append("foreignObject");
+
+    var input = form
+        .attr({
+            "x": xy.x,
+            "y": d3.transform(el.attr('transform')).translate[1]-25,
+            "height": 25
+        })
+        .append("xhtml:form")
+        .append("input")
+        .attr({
+            "value": function () {
+                // nasty spot to place this call, but here we are sure that the <input> tag is available
+                // and is handily pointed at by 'this':
+                this.focus();
+                return parseFloat(el.text());
+            },
+            "class": "axis-text",
+            "size": 8
+        })
+        .on("blur", function () {
+            updateMaxMinExtents(el, p_el, input.node().value);
+        })
+        .on("keypress", function () {
+            // IE fix
+            if (!d3.event)
+                d3.event = window.event;
+
+            var e = d3.event;
+            if (e.keyCode == 13) {
+                if (typeof(e.cancelBubble) !== 'undefined') // IE
+                    e.cancelBubble = true;
+                if (e.stopPropagation)
+                    e.stopPropagation();
+                e.preventDefault();
+
+                updateMaxMinExtents(el, p_el, input.node().value);
+            }
+        });
+}
+
+function updateMaxMinExtents(element, parent, val) {
+    val = parseFloat(val);
+    element.text(val);
+
+    parent.select("foreignObject").remove();
+    var oldExtents = pc.brushExtents();
+    var newAxisExtent = element.attr('class') === 'axis-min' ? [val, parseFloat(parent.select('.axis-max').text())] : [parseFloat(parent.select('.axis-min').text()), val];
+
+    oldExtents[element[0][0].__data__] = newAxisExtent;
+    pc.brushExtents(oldExtents);
+}
+
+function addMaxMinText(g) {
+    g.append("svg:text")
+        .attr({
+            "contentEditable" : "true",
+            "text-anchor": "middle",
+            "y": 0,
+            "transform": "translate(0,-3)",
+            "x": 0,
+            "class": "axis-max"
+        })
+        .text(dimensionMax)
+        .on("click", dimensionValListener);
+
+    g.append("svg:text")
+        .attr({
+            "contentEditable" : "true",
+            "text-anchor": "middle",
+            "y": 0,
+            "transform": "translate(0,"+(h()+20)+")",
+            "x": 0,
+            "class": "axis-min"
+        })
+        .text(dimensionMin)
+        .on("click", dimensionValListener);
 }
 
 pc.createAxes = function() {
@@ -47,13 +146,14 @@ pc.createAxes = function() {
       .attr({
         "text-anchor": "middle",
         "y": 0,
-        "transform": "translate(0,-5) rotate(" + __.dimensionTitleRotation + ")",
+        "transform": "translate(0,-18) rotate(" + __.dimensionTitleRotation + ")",
         "x": 0,
         "class": "label"
       })
       .text(dimensionLabels)
       .on("dblclick", flipAxisAndUpdatePCP)
       .on("wheel", rotateLabels);
+  addMaxMinText(g);
 
   flags.axes= true;
   return this;
@@ -67,26 +167,29 @@ pc.removeAxes = function() {
 pc.updateAxes = function() {
   var g_data = pc.svg.selectAll(".dimension").data(__.dimensions);
 
-  // Enter
-  g_data.enter().append("svg:g")
-      .attr("class", "dimension")
-      .attr("transform", function(p) { return "translate(" + position(p) + ")"; })
-      .style("opacity", 0)
-    .append("svg:g")
-      .attr("class", "axis")
-      .attr("transform", "translate(0,0)")
-      .each(function(d) { d3.select(this).call(axis.scale(yscale[d])); })
-    .append("svg:text")
-      .attr({
-        "text-anchor": "middle",
-        "y": 0,
-        "transform": "translate(0,-5) rotate(" + __.dimensionTitleRotation + ")",
-        "x": 0,
-        "class": "label"
-      })
-      .text(dimensionLabels)
-      .on("dblclick", flipAxisAndUpdatePCP)
-      .on("wheel", rotateLabels);
+    // Enter, save dimension to add multiple svg:text
+    var dimension = g_data.enter().append("svg:g")
+        .attr("class", "dimension")
+        .attr("transform", function(p) { return "translate(" + position(p) + ")"; })
+        .style("opacity", 0)
+        .append("svg:g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0,0)");
+
+    dimension.each(function(d) { d3.select(this).call(axis.scale(yscale[d])); })
+        .append("svg:text")
+        .attr({
+            "text-anchor": "middle",
+            "y": 0,
+            "transform": "translate(0,-18) rotate(" + __.dimensionTitleRotation + ")",
+            "x": 0,
+            "class": "label"
+        })
+        .text(dimensionLabels)
+        .on("dblclick", flipAxisAndUpdatePCP)
+        .on("wheel", rotateLabels);
+
+    addMaxMinText(dimension);
 
   // Update
   g_data.attr("opacity", 0);
@@ -100,7 +203,7 @@ pc.updateAxes = function() {
     .transition()
       .duration(1100)
       .text(dimensionLabels)
-      .attr("transform", "translate(0,-5) rotate(" + __.dimensionTitleRotation + ")");
+      .attr("transform", "translate(0,-18) rotate(" + __.dimensionTitleRotation + ")");
 
   // Exit
   g_data.exit().remove();
