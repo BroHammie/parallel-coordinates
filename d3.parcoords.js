@@ -1066,6 +1066,19 @@ pc.brushMode = function(mode) {
         var extent = brush.extent();
         extent.sort(d3.ascending);
         extents[d] = extent;
+      } else {
+        if (!d3.selectAll('.axis-max').empty()) {
+          var maxs = d3.selectAll('.axis-max')[0];
+          var mins = d3.selectAll('.axis-min')[0];
+
+          __.dimensions.forEach(function(d) {
+            var index = __.dimensions.indexOf(d);
+            if (index > -1) {
+              d3.select(maxs[index]).text((yscale[d].domain()[1]).toFixed(2));
+              d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
+            }
+          });
+        }
       }
     });
     return extents;
@@ -1117,8 +1130,8 @@ pc.brushMode = function(mode) {
       .on("brush", function() {
         brushUpdated(selected());
 
-        var maxs = d3.select(this.parentNode.parentNode).selectAll('.axis-max')[0];
-        var mins = d3.select(this.parentNode.parentNode).selectAll('.axis-min')[0];
+        var maxs = d3.selectAll('.axis-max')[0];
+        var mins = d3.selectAll('.axis-min')[0];
 
         d3.entries(pc.brushExtents()).forEach(function(d) {
           var index = __.dimensions.indexOf(d.key);
