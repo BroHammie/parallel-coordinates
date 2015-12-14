@@ -1066,19 +1066,6 @@ pc.brushMode = function(mode) {
         var extent = brush.extent();
         extent.sort(d3.ascending);
         extents[d] = extent;
-      } else {
-        if (!d3.selectAll('.axis-max').empty()) {
-          var maxs = d3.selectAll('.axis-max')[0];
-          var mins = d3.selectAll('.axis-min')[0];
-
-          __.dimensions.forEach(function(d) {
-            var index = __.dimensions.indexOf(d);
-            if (index > -1) {
-              d3.select(maxs[index]).text((yscale[d].domain()[1]).toFixed(2));
-              d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
-            }
-          });
-        }
       }
     });
     return extents;
@@ -1133,6 +1120,18 @@ pc.brushMode = function(mode) {
         var maxs = d3.selectAll('.axis-max')[0];
         var mins = d3.selectAll('.axis-min')[0];
 
+        __.dimensions.forEach(function(d) {
+          var brushed = d3.keys(pc.brushExtents()).indexOf(d);
+          var index = __.dimensions.indexOf(d);
+          if (brushed === -1) {
+            d3.select(maxs[index]).text((yscale[d].domain()[1]).toFixed(2));
+            d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
+          } else {
+            d3.select(maxs[index]).text(pc.brushExtents()[d][1].toFixed(2));
+            d3.select(mins[index]).text(pc.brushExtents()[d][0].toFixed(2));
+          }
+        });
+
         d3.entries(pc.brushExtents()).forEach(function(d) {
           var index = __.dimensions.indexOf(d.key);
           if (index > -1) {
@@ -1151,6 +1150,19 @@ pc.brushMode = function(mode) {
   function brushReset(dimension) {
     __.brushed = false;
     if (g) {
+      if (!d3.selectAll('.axis-max').empty()) {
+        var maxs = d3.selectAll('.axis-max')[0];
+        var mins = d3.selectAll('.axis-min')[0];
+
+        __.dimensions.forEach(function(d) {
+          var index = __.dimensions.indexOf(d);
+          if (index > -1) {
+            d3.select(maxs[index]).text((yscale[d].domain()[1]).toFixed(2));
+            d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
+          }
+        });
+      }
+
       g.selectAll('.brush')
         .each(function(d) {
           d3.select(this).call(
