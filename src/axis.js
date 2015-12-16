@@ -8,7 +8,7 @@ function flipAxisAndUpdatePCP(dimension) {
   d3.select(this.parentElement)
     .transition()
       .duration(1100)
-      .call(axis.scale(yscale[dimension]));
+      .call(axis.scale(yscale[dimension]).tickFormat(tickFormat[dimension]));
 
   pc.render();
 }
@@ -42,7 +42,7 @@ pc.createAxes = function() {
   g.append("svg:g")
       .attr("class", "axis")
       .attr("transform", "translate(0,0)")
-      .each(function(d) { d3.select(this).call(axis.scale(yscale[d])); })
+      .each(function(d) { d3.select(this).call(axis.scale(yscale[d]).tickFormat(tickFormat[d])) })
     .append("svg:text")
       .attr({
         "text-anchor": "middle",
@@ -75,7 +75,7 @@ pc.updateAxes = function() {
     .append("svg:g")
       .attr("class", "axis")
       .attr("transform", "translate(0,0)")
-      .each(function(d) { d3.select(this).call(axis.scale(yscale[d])); })
+      .each(function(d) { d3.select(this).call(axis.scale(yscale[d]).tickFormat(tickFormat[d])); })
     .append("svg:text")
       .attr({
         "text-anchor": "middle",
@@ -93,10 +93,9 @@ pc.updateAxes = function() {
   g_data.select(".axis")
     .transition()
       .duration(1100)
-      .each(function(d) {
-        d3.select(this).call(axis.scale(yscale[d]));
-      });
-  g_data.select(".label")
+      .each(function(d) { d3.select(this).call(axis.scale(yscale[d]).tickFormat(tickFormat[d])) });
+
+    g_data.select(".label")
     .transition()
       .duration(1100)
       .text(dimensionLabels)
@@ -113,7 +112,7 @@ pc.updateAxes = function() {
   pc.svg.selectAll(".axis")
     .transition()
       .duration(1100)
-      .each(function(d) { d3.select(this).call(axis.scale(yscale[d])); });
+      .each(function(d) { d3.select(this).call(axis.scale(yscale[d]).tickFormat(tickFormat[d])) });
 
   if (flags.brushable) pc.brushable();
   if (flags.reorderable) pc.reorderable();

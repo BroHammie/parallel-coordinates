@@ -56,7 +56,10 @@ pc.autoscale = function() {
   };
 
   __.dimensions.forEach(function(k) {
-    yscale[k] = defaultScales[__.types[k]](k);
+    //If one is already defined don't override
+    if (!yscale[k]) {
+      yscale[k] = defaultScales[__.types[k]](k);
+    }
   });
 
   __.hideAxis.forEach(function(k) {

@@ -61,6 +61,7 @@ var events = d3.dispatch.apply(this,["render", "resize", "highlight", "brush", "
     },
     xscale = d3.scale.ordinal(),
     yscale = {},
+    tickFormat = {},
     dragging = {},
     line = d3.svg.line(),
     axis = d3.svg.axis().orient("left").ticks(5),
@@ -207,7 +208,10 @@ pc.autoscale = function() {
   };
 
   __.dimensions.forEach(function(k) {
-    yscale[k] = defaultScales[__.types[k]](k);
+    //If one is already defined don't override
+    if (!yscale[k]) {
+      yscale[k] = defaultScales[__.types[k]](k);
+    }
   });
 
   __.hideAxis.forEach(function(k) {
@@ -317,7 +321,7 @@ pc.detectDimensionTypes = function(data) {
 pc.render = function() {
   // try to autodetect dimensions and create scales
   if (!__.dimensions.length) pc.detectDimensions();
-  if (!(__.dimensions[0] in yscale)) pc.autoscale();
+  pc.autoscale();
 
   pc.render[__.mode]();
 
@@ -596,7 +600,7 @@ function flipAxisAndUpdatePCP(dimension) {
   d3.select(this.parentElement)
     .transition()
       .duration(1100)
-      .call(axis.scale(yscale[dimension]));
+      .call(axis.scale(yscale[dimension]).tickFormat(tickFormat[dimension]));
 
   pc.render();
 }
@@ -630,7 +634,7 @@ pc.createAxes = function() {
   g.append("svg:g")
       .attr("class", "axis")
       .attr("transform", "translate(0,0)")
-      .each(function(d) { d3.select(this).call(axis.scale(yscale[d])); })
+      .each(function(d) { d3.select(this).call(axis.scale(yscale[d]).tickFormat(tickFormat[d])) })
     .append("svg:text")
       .attr({
         "text-anchor": "middle",
@@ -663,7 +667,7 @@ pc.updateAxes = function() {
     .append("svg:g")
       .attr("class", "axis")
       .attr("transform", "translate(0,0)")
-      .each(function(d) { d3.select(this).call(axis.scale(yscale[d])); })
+      .each(function(d) { d3.select(this).call(axis.scale(yscale[d]).tickFormat(tickFormat[d])); })
     .append("svg:text")
       .attr({
         "text-anchor": "middle",
@@ -681,10 +685,9 @@ pc.updateAxes = function() {
   g_data.select(".axis")
     .transition()
       .duration(1100)
-      .each(function(d) {
-        d3.select(this).call(axis.scale(yscale[d]));
-      });
-  g_data.select(".label")
+      .each(function(d) { d3.select(this).call(axis.scale(yscale[d]).tickFormat(tickFormat[d])) });
+
+    g_data.select(".label")
     .transition()
       .duration(1100)
       .text(dimensionLabels)
@@ -701,7 +704,7 @@ pc.updateAxes = function() {
   pc.svg.selectAll(".axis")
     .transition()
       .duration(1100)
-      .each(function(d) { d3.select(this).call(axis.scale(yscale[d])); });
+      .each(function(d) { d3.select(this).call(axis.scale(yscale[d]).tickFormat(tickFormat[d])) });
 
   if (flags.brushable) pc.brushable();
   if (flags.reorderable) pc.reorderable();
@@ -1967,6 +1970,7 @@ pc.interactive = function() {
 // expose a few objects
 pc.xscale = xscale;
 pc.yscale = yscale;
+pc.tickFormat = tickFormat;
 pc.ctx = ctx;
 pc.canvas = canvas;
 pc.g = function() { return g; };

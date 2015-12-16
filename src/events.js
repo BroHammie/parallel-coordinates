@@ -10,6 +10,7 @@ var events = d3.dispatch.apply(this,["render", "resize", "highlight", "brush", "
     },
     xscale = d3.scale.ordinal(),
     yscale = {},
+    tickFormat = {},
     dragging = {},
     line = d3.svg.line(),
     axis = d3.svg.axis().orient("left").ticks(5),

@@ -39,6 +39,22 @@ var parcoords = d3.parcoords()("#example")
     .color(color)
     .alpha(0.4);
 
+var economyLog = d3.scale.log().domain([10, 13000]).range([200 - parcoords.margin().top - parcoords.margin().bottom, 1]);
+parcoords.yscale['economy (mpg)'] = economyLog;
+parcoords.tickFormat['economy (mpg)'] = function(d){
+  return economyLog.tickFormat(4,d3.format(",d"))(d);
+};
+
+parcoords.tickFormat['cylinders'] = function(d) {
+  return {
+    3: "Three",
+    4: "Quatro",
+    5: "5",
+    6: "Six",
+    7: "7-Seven",
+    8: "Eight"
+  }[d]
+};
 // load csv file and create the chart
 d3.csv('data/cars.csv', function(data) {
   parcoords
