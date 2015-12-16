@@ -54,7 +54,8 @@ function dimensionValListener(e) {
         .attr({
             "x": xy.x,
             "y": d3.transform(el.attr('transform')).translate[1]-25,
-            "height": 25
+            "height": 25,
+            "width": 100
         })
         .append("xhtml:form")
         .append("input")
