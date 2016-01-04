@@ -617,11 +617,13 @@ function dimensionLabels(d) {
 }
 
 function dimensionMax(d) {
-    return d in yscale ? (yscale[d].domain()[1]).toFixed(2) : d;  // dimension display names
+    var domain = yscale[d].domain();
+    return d in yscale ? (domain[domain.length-1]).toFixed(2) : d;  // dimension display names
 }
 
 function dimensionMin(d) {
-    return d in yscale ? (yscale[d].domain()[0]).toFixed(2) : d;  // dimension display names
+    var domain = yscale[d].domain();
+    return d in yscale ? (domain[domain.length-1]).toFixed(2) : d;  // dimension display names
 }
 
 function dimensionValListener(e) {
@@ -1125,21 +1127,19 @@ pc.brushMode = function(mode) {
           var brushed = d3.keys(pc.brushExtents()).indexOf(d);
           var index = __.dimensions.indexOf(d);
           if (brushed === -1) {
-            d3.select(maxs[index]).text((yscale[d].domain()[1]).toFixed(2));
-            d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
+            if (yscale[d].domain().length > 1) {
+              d3.select(maxs[index]).text((yscale[d].domain()[1]).toFixed(2));
+              d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
+            } else {
+              d3.select(maxs[index]).text((yscale[d].domain()[0]).toFixed(2));
+              d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
+            }
           } else {
             d3.select(maxs[index]).text(pc.brushExtents()[d][1].toFixed(2));
             d3.select(mins[index]).text(pc.brushExtents()[d][0].toFixed(2));
           }
         });
 
-        d3.entries(pc.brushExtents()).forEach(function(d) {
-          var index = __.dimensions.indexOf(d.key);
-          if (index > -1) {
-            d3.select(maxs[index]).text(d.value[1].toFixed(2));
-            d3.select(mins[index]).text(d.value[0].toFixed(2));
-          }
-        });
       })
       .on("brushend", function() {
         events.brushend.call(pc, __.brushed);
@@ -1157,8 +1157,11 @@ pc.brushMode = function(mode) {
 
         __.dimensions.forEach(function(d) {
           var index = __.dimensions.indexOf(d);
-          if (index > -1) {
+          if (index > -1 && yscale[d].domain().length > 1) {
             d3.select(maxs[index]).text((yscale[d].domain()[1]).toFixed(2));
+            d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
+          } else {
+            d3.select(maxs[index]).text((yscale[d].domain()[0]).toFixed(2));
             d3.select(mins[index]).text((yscale[d].domain()[0]).toFixed(2));
           }
         });

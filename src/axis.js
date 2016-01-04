@@ -29,11 +29,13 @@ function dimensionLabels(d) {
 }
 
 function dimensionMax(d) {
-    return d in yscale ? (yscale[d].domain()[1]).toFixed(2) : d;  // dimension display names
+    var domain = yscale[d].domain();
+    return d in yscale ? (domain[domain.length-1]).toFixed(2) : d;  // dimension display names
 }
 
 function dimensionMin(d) {
-    return d in yscale ? (yscale[d].domain()[0]).toFixed(2) : d;  // dimension display names
+    var domain = yscale[d].domain();
+    return d in yscale ? (domain[domain.length-1]).toFixed(2) : d;  // dimension display names
 }
 
 function dimensionValListener(e) {
