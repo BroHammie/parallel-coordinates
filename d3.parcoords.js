@@ -688,7 +688,7 @@ function updateMaxMinExtents(element, parent, val) {
     var oldExtents = pc.brushExtents();
     var newAxisExtent = element.attr('class') === 'axis-min' ? [val, parseFloat(parent.select('.axis-max').text())] : [parseFloat(parent.select('.axis-min').text()), val];
 
-    oldExtents[element[0][0].__data__] = newAxisExtent;
+    oldExtents[element[0][0].__data__] = newAxisExtent.sort();
     pc.brushExtents(oldExtents);
 }
 
