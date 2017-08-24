@@ -9,7 +9,7 @@
 
   // data within extents
   function selected() {
-    var actives = __.dimensions.filter(is_brushed),
+    var actives = d3.keys(__.dimensions).filter(is_brushed),
         extents = actives.map(function(p) { return brushes[p].extent(); });
 
     // We don't want to return the full data set when there are no axes brushed.
@@ -23,13 +23,21 @@
     // test if within range
     var within = {
       "date": function(d,p,dimension) {
-        return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1]
+	if (typeof __.dimensions[p].yscale.rangePoints === "function") { // if it is ordinal
+          return extents[dimension][0] <= __.dimensions[p].yscale(d[p]) && __.dimensions[p].yscale(d[p]) <= extents[dimension][1]
+        } else {
+          return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1]
+        }
       },
       "number": function(d,p,dimension) {
-        return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1]
+        if (typeof __.dimensions[p].yscale.rangePoints === "function") { // if it is ordinal
+          return extents[dimension][0] <= __.dimensions[p].yscale(d[p]) && __.dimensions[p].yscale(d[p]) <= extents[dimension][1]
+        } else {
+          return extents[dimension][0] <= d[p] && d[p] <= extents[dimension][1]
+        }
       },
       "string": function(d,p,dimension) {
-        return extents[dimension][0] <= yscale[p](d[p]) && yscale[p](d[p]) <= extents[dimension][1]
+        return extents[dimension][0] <= __.dimensions[p].yscale(d[p]) && __.dimensions[p].yscale(d[p]) <= extents[dimension][1]
       }
     };
 
@@ -38,11 +46,11 @@
         switch(brush.predicate) {
         case "AND":
           return actives.every(function(p, dimension) {
-            return within[__.types[p]](d,p,dimension);
+            return within[__.dimensions[p].type](d,p,dimension);
           });
         case "OR":
           return actives.some(function(p, dimension) {
-            return within[__.types[p]](d,p,dimension);
+            return within[__.dimensions[p].type](d,p,dimension);
           });
         default:
           throw "Unknown brush predicate " + __.brushPredicate;
@@ -52,62 +60,62 @@
 
   function brushExtents(extents) {
     if(typeof(extents) === 'undefined')
-  {
-    var extents = {};
-    __.dimensions.forEach(function(d) {
-      var brush = brushes[d];
-      if (brush !== undefined && !brush.empty()) {
-        var extent = brush.extent();
-        extent.sort(d3.ascending);
-        extents[d] = extent;
-      }
-    });
-    return extents;
-  }
-  else 
-  {
-    //first get all the brush selections
-    var brushSelections = {};
-    g.selectAll('.brush')
-      .each(function(d) {
-        brushSelections[d] = d3.select(this);
+		{
+			var extents = {};
+			d3.keys(__.dimensions).forEach(function(d) {
+				var brush = brushes[d];
+				if (brush !== undefined && !brush.empty()) {
+					var extent = brush.extent();
+					extent.sort(d3.ascending);
+					extents[d] = extent;
+				}
+			});
+			return extents;
+		}
+		else
+		{
+			//first get all the brush selections
+			var brushSelections = {};
+			g.selectAll('.brush')
+				.each(function(d) {
+					brushSelections[d] = d3.select(this);
 
-    });   
-    
-    // loop over each dimension and update appropriately (if it was passed in through extents)
-    __.dimensions.forEach(function(d) {
-      if (extents[d] === undefined){
-        return;
-      }
-      
-      var brush = brushes[d];
-      if (brush !== undefined) {
-        //update the extent
-        brush.extent(extents[d]);
-        
-        //redraw the brush
-        brush(brushSelections[d]);
-        
-        //fire some events
-        brush.event(brushSelections[d]);
-      }
-    });
-    
-    //redraw the chart
-    pc.renderBrushed();
-  }
+			});
+
+			// loop over each dimension and update appropriately (if it was passed in through extents)
+			d3.keys(__.dimensions).forEach(function(d) {
+				if (extents[d] === undefined){
+					return;
+				}
+
+				var brush = brushes[d];
+				if (brush !== undefined) {
+					//update the extent
+					brush.extent(extents[d]);
+
+					//redraw the brush
+					brush(brushSelections[d]);
+
+					//fire some events
+					brush.event(brushSelections[d]);
+				}
+			});
+
+			//redraw the chart
+			pc.renderBrushed();
+		}
   }
 
   function brushFor(axis) {
     var brush = d3.svg.brush();
 
     brush
-      .y(yscale[axis])
-      .on("brushstart", function() { 
-      if(d3.event.sourceEvent !== null) {
-        d3.event.sourceEvent.stopPropagation();
-    }
-    })
+      .y(__.dimensions[axis].yscale)
+      .on("brushstart", function() {
+				if(d3.event.sourceEvent !== null) {
+					d3.event.sourceEvent.stopPropagation();
+				}
+			})
       .on("brush", function() {
         brushUpdated(selected());
 
@@ -138,7 +146,7 @@
 
     brushes[axis] = brush;
     return brush;
-  }
+  };
   function brushReset(dimension) {
     __.brushed = false;
     if (g) {
@@ -186,7 +194,7 @@
     pc.brushExtents = brushExtents;
     pc.brushReset = brushReset;
     return pc;
-  }
+  };
 
   brush.modes["1D-axes"] = {
     install: install,

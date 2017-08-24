@@ -3,7 +3,6 @@
 <link rel="stylesheet" type="text/css" href="d3.parcoords.css">
 <script src="examples/lib/d3.min.js"></script>
 <script src="examples/lib/sylvester.js"></script>
-<script src="examples/lib/underscore.js"></script>
 <script src="examples/lib/slickgrid/jquery-1.7.min.js"></script>
 <script src="examples/lib/underscore.js"></script>
 <script src="examples/lib/underscore.math.js"></script>
@@ -119,7 +118,6 @@ var data = [
 var pc = d3.parcoords()("#<strong>example</strong>")
   .data(<strong>data</strong>)
   .render()
-  .ticks(3)
   .createAxes();
 &lt;/script&gt;
 </pre>
@@ -135,7 +133,6 @@ var data = [
 var pc = d3.parcoords()("#example")
   .data(data)
   .render()
-  .ticks(3)
   .createAxes();
 </script>
 
@@ -159,7 +156,7 @@ Drag the axes titles around to reorder the dimensions.
 d3.select("#reorder-dance").on("click", function() {
   event.preventDefault();
   function dance() {
-    pc2.dimensions( _.shuffle(pc2.dimensions()) )
+    pc2.dimensions( _.shuffle(d3.keys(pc2.dimensions())) )
     .render()
     .updateAxes();
   };
@@ -490,7 +487,7 @@ pc0 = d3.parcoords()("#example0")
 	var select = d3.select("#bundleDimension").append("select").on("change", changeBundle);
 	
 	var options = select.selectAll('option')
-		.data(pc0.dimensions().concat(pc0.hideAxis()));
+		.data(d3.keys(pc0.dimensions()));
 	
 	options
 		.enter()
